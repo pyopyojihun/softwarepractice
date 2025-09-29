@@ -5,7 +5,7 @@ import re, math
 if "expr" not in st.session_state:
     st.session_state["expr"] = "0"
 
-# --- 유틸 함수 (PyQt 코드 그대로 재활용) ---
+# --- 유틸 함수 (코드 그대로 재활용) ---
 def preprocess(expr: str) -> str:
     expr = expr.replace("π", "pi")
     expr = expr.replace("^", "**")
@@ -56,21 +56,41 @@ st.title("📐 Streamlit 계산기")
 st.text_input("수식 입력", value=st.session_state["expr"], key="expr_input")
 
 # 버튼 패드
-cols = st.columns(4)
-buttons = [
+# 버튼 배열 (빈칸은 "")
+button_grid = [
     ["7","8","9","/"],
     ["4","5","6","*"],
     ["1","2","3","-"],
     ["0",".","(",")"],
+    ["sin(","cos(","tan(","sqrt("],
+    ["log(","abs(","π","^"],
+    ["Clear","Del","Run",""],
 ]
-for row in buttons:
+
+
+for row in button_grid:
     cols = st.columns(4)
     for i, label in enumerate(row):
-        if cols[i].button(label):
-            if st.session_state["expr"] == "0":
-                st.session_state["expr"] = label
-            else:
-                st.session_state["expr"] += label
+        if label:  # 빈칸이 아닐 때만 버튼 생성
+            if cols[i].button(label):
+                if label == "Clear":
+                    st.session_state["expr"] = "0"
+                elif label == "Del":
+                    txt = st.session_state["expr"][:-1]
+                    st.session_state["expr"] = txt if txt else "0"
+                elif label == "Run":
+                    expr = preprocess(st.session_state["expr"])
+                    st.session_state["expr"] = safe_eval(expr)
+                elif label == "π":
+                    st.session_state["expr"] += "pi" if st.session_state["expr"] != "0" else "pi"
+                elif label == "^":
+                    st.session_state["expr"] += "**"
+                else:
+                    if st.session_state["expr"] == "0":
+                        st.session_state["expr"] = label
+                    else:
+                        st.session_state["expr"] += label
+
 
 # 함수 버튼
 funcs = ["sin(","cos(","tan(","sqrt(","log(","abs("]
@@ -103,3 +123,4 @@ if st.button("Run"):
 # 결과 출력
 st.subheader("결과")
 st.write(st.session_state["expr"])
+
